@@ -2,22 +2,14 @@ import pytest
 import numpy as np
 from src.tensor import Tensor
 
-@pytest.fixture
-def scalar():
-    return Tensor(np.random.randn(1))
-
-@pytest.fixture
-def vector():
-    return Tensor(np.random.randn(1,5))
-
-@pytest.fixture
-def matrix():
-    return Tensor(np.random.randn(4,5))
+scalar = Tensor(np.random.randn(1))
+vector = Tensor(np.random.randn(1,5))
+matrix = Tensor(np.random.randn(4,5))
 
 operands = [
-    Tensor(np.random.randn(1)),
-    Tensor(np.random.randn(1,5)),
-    Tensor(np.random.randn(4,5))
+    scalar,
+    vector,
+    matrix
 ]
 
 def function_with_addition(arg):
@@ -57,54 +49,27 @@ class TestForward:
 
 
 class TestBackpropagation:
-    def test_backpropagation_reaches_operand_a(self):
-        f = Tensor(4)
-        g = Tensor(5)
-        h = f + g
-        h.backpropagate_a()
-        assert f.grad is not None
+    def nudge_input_at_index(self, original, index, delta):
+        nudge = np.zeros(original.value.shape)
+        nudge[index] = delta
+        return original + nudge
 
-    def test_backpropagation_reaches_operand_b(self):
-        f = Tensor(4)
-        g = Tensor(5)
-        h = f + g
-        h.backpropagate_b()
-        assert g.grad is not None
+    @pytest.mark.parametrize('operation', operations)
+    @pytest.mark.parametrize('operand', operands)
+    def test_all_operations_on_all_operands(self, operation, operand):
+        original_output = operation(operand)
+        original_output.backwards()
+        autograd_calculated_gradient = operand.grad.copy()
         
-    def test_backpropagate_add(self):
-        a = Tensor(5)
-        b = Tensor(6)
-
-        out = a + b
-        before = out.value
-
+        operand_indices = list(zip(*np.where(operand.value)))
         delta = 0.0001
-        a.value = a.value + delta
+        for index in operand_indices:
+            nudged_input = self.nudge_input_at_index(operand, index, delta)
+            output_after_nudge = operation(nudged_input)
 
-        out = a + b
-        after = out.value
-
-        out.backwards()
-
-        real_gradient = (after - before) / delta
-
-        assert np.isclose(real_gradient, a.grad)
-
-    def test_backpropagate_add(self):
-        a = Tensor(5)
-        b = Tensor(6)
-
-        out = a * b
-        before = out.value
-
-        delta = 0.0001
-        a.value = a.value + delta
-
-        out = a * b
-        after = out.value
-
-        out.backwards()
-
-        real_gradient = (after - before) / delta
-
-        assert np.isclose(real_gradient, a.grad)
+            dy = output_after_nudge.value - original_output.value
+            numerically_calculated_gradient = (dy) / delta
+            assert np.allclose(
+                autograd_calculated_gradient, 
+                numerically_calculated_gradient
+            )
