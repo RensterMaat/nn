@@ -8,12 +8,17 @@ def scalar():
 
 @pytest.fixture
 def vector():
-    return Tensor(np.random.randn((1,5)))
+    return Tensor(np.random.randn(1,5))
 
-def function_with_all_operators(arg):
-    out = function_with_addition(arg)
-    out = function_with_multiplication(out)
-    return out
+@pytest.fixture
+def matrix():
+    return Tensor(np.random.randn(4,5))
+
+operands = [
+    Tensor(np.random.randn(1)),
+    Tensor(np.random.randn(1,5)),
+    Tensor(np.random.randn(4,5))
+]
 
 def function_with_addition(arg):
     out = arg + arg
@@ -22,35 +27,34 @@ def function_with_addition(arg):
     return out
 
 def function_with_multiplication(arg):
-    out = out * out
+    out = arg * arg
     out = 2 * out
     out = out * 3
     return out
 
-def test_tensor_holds_value():
-    x = 5
-    t = Tensor(5)
-    assert t.value == x
+def function_with_all_operators(arg):
+    out = function_with_addition(arg)
+    out = function_with_multiplication(out)
+    return out
+
+operations = [
+    function_with_addition,
+    function_with_multiplication,
+    function_with_all_operators
+]
+
+def compare_forward_results(arg, function):
+    tensor_result = function(arg).value
+    comparison_result = function(arg.value)
+    assert np.all(tensor_result == comparison_result)
 
 
-class TestOperators:
-    def test_add(self, scalar):
-        assert (scalar + 2).value == scalar.value + 2
+class TestForward:
+    @pytest.mark.parametrize('operation', operations)
+    @pytest.mark.parametrize('operand', operands)
+    def test_all_operations_on_all_operands(self, operation, operand):
+        compare_forward_results(operand, operation)
 
-    def test_radd(self, scalar):
-        assert (2 + scalar).value == scalar.value + 2
-
-    def test_mul(self, scalar):
-        assert (scalar * 2).value == 2 * scalar.value
-
-    def test_rmul(self, scalar):
-        assert (2* scalar).value == 2 * scalar.value
-
-    def test_add_vectors(self):
-        assert all((c + d).value == [3,5,7])
-
-    def test_mul_vectors(self):
-        assert all((c * d).value == [2,6,12])
 
 class TestBackpropagation:
     def test_backpropagation_reaches_operand_a(self):
@@ -66,9 +70,6 @@ class TestBackpropagation:
         h = f + g
         h.backpropagate_b()
         assert g.grad is not None
-
-    def test_root_node_gradient_is_one(self):
-        assert all(out.grad == np.ones(out.value.shape))
         
     def test_backpropagate_add(self):
         a = Tensor(5)
