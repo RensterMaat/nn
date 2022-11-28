@@ -10,12 +10,16 @@ class Tensor:
         else:
             self.value = np.array(value)
             self.a, self.b = None, None
-            self.grad = 0
+            self.grad = np.zeros(self.value.shape)
 
     def backwards(self, queue=None):
         if queue is None:
-            queue = []
-            self.grad = np.ones(self.value.shape)
+            if self.value.ndim > 0:
+                Sum(self).backwards()
+                return None
+            else:
+                queue = []
+                self.grad = np.ones(self.value.shape)
 
         if self.a is not None:
             self.backpropagate_a()
@@ -28,6 +32,9 @@ class Tensor:
         if queue:
             queue[0].backwards(queue=queue[1:])
 
+    def zero_grad(self):
+        self.grad = 0
+
     def backpropagate_a(self):
         self.a.grad = np.array(-1)
 
@@ -39,17 +46,25 @@ class Tensor:
             return queue + [el]
         return queue
 
+    def cast_to_tensor(self, x):
+        if not isinstance(x, Tensor):
+            return Tensor(x)
+        return x
+
     def __add__(self, b):
-        return Add(self, Tensor(b))
+        return Add(self, self.cast_to_tensor(b))
 
     def __radd__(self, a):
-        return Add(Tensor(a), self)
+        return Add(self.cast_to_tensor(a), self)
 
     def __mul__(self, b):
-        return Mul(self, Tensor(b))
+        return Mul(self, self.cast_to_tensor(b))
 
     def __rmul__(self, a):
-        return Mul(Tensor(a), self)
+        return Mul(self.cast_to_tensor(a), self)
+
+    def sum(self):
+        return Sum(self)
 
 
 class Add(Tensor):
@@ -76,3 +91,11 @@ class Mul(Tensor):
     def backpropagate_b(self):
         gradient = self.a.value * self.grad
         self.b.grad = self.b.grad + gradient
+
+class Sum(Tensor):
+    def __init__(self, a):
+        super().__init__(a.value.sum())
+        self.a = a
+
+    def backpropagate_a(self):
+        self.a.grad = self.a.grad + self.grad

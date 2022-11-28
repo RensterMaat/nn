@@ -24,6 +24,9 @@ def function_with_multiplication(arg):
     out = out * 3
     return out
 
+def function_with_dot_product(arg):
+    pass
+
 def function_with_all_operators(arg):
     out = function_with_addition(arg)
     out = function_with_multiplication(out)
@@ -57,19 +60,31 @@ class TestBackpropagation:
     @pytest.mark.parametrize('operation', operations)
     @pytest.mark.parametrize('operand', operands)
     def test_all_operations_on_all_operands(self, operation, operand):
+        operand.zero_grad()
+
         original_output = operation(operand)
         original_output.backwards()
         autograd_calculated_gradient = operand.grad.copy()
         
         operand_indices = list(zip(*np.where(operand.value)))
-        delta = 0.0001
+        delta = 0.00000000001
         for index in operand_indices:
             nudged_input = self.nudge_input_at_index(operand, index, delta)
             output_after_nudge = operation(nudged_input)
 
-            dy = output_after_nudge.value - original_output.value
+            dy = output_after_nudge.value.sum() - original_output.value.sum()
             numerically_calculated_gradient = (dy) / delta
             assert np.allclose(
-                autograd_calculated_gradient, 
-                numerically_calculated_gradient
+                autograd_calculated_gradient[index], 
+                numerically_calculated_gradient,
+                rtol=0,
+                atol=0.1
             )
+
+
+# test vector as:
+    # bias
+    # softmax
+    # loss function
+# test matrix as:
+    # 
