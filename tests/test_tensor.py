@@ -38,7 +38,7 @@ def function_with_dot_product(arg):
 
     return out
 
-def function_with_exp(arg):
+def function_with_pow(arg):
     out = arg ** 2
     out = 2 ** out
     return out
@@ -47,7 +47,7 @@ operations = [
     function_with_addition,
     function_with_multiplication,
     function_with_dot_product,
-    function_with_exp
+    function_with_pow
 ]
 
 def compare_forward_results(arg, function):

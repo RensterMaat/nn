@@ -71,6 +71,12 @@ class Tensor:
     def __rmatmul__(self, a):
         return Dot(self.cast_to_tensor(a), self)
 
+    def __pow__(self, b):
+        return Pow(self, self.cast_to_tensor(b))
+
+    def __rpow__(self, a):
+        return Pow(self.cast_to_tensor(a), self)
+
     def sum(self):
         return Sum(self)
 
@@ -121,4 +127,18 @@ class Dot(Tensor):
 
     def backpropagate_b(self):
         gradient = self.a.value.T @ self.grad
+        self.b.grad = self.b.grad + gradient
+
+
+class Pow(Tensor):
+    def __init__(self, a, b):
+        super().__init__(a.value ** b.value)
+        self.a, self.b = a,b
+
+    def backpropagate_a(self):
+        gradient = self.b.value * self.a.value ** (self.b.value-1) * self.grad
+        self.a.grad = self.a.grad + gradient
+
+    def backpropagate_b(self):
+        gradient = np.log(self.a.value) * self.a.value ** self.b.value * self.grad
         self.b.grad = self.b.grad + gradient
