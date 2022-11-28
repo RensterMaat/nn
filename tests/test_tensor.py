@@ -37,11 +37,17 @@ def function_with_dot_product(arg):
     out = out @ np.random.uniform(1,2, size=(out.shape[-1], 3))
 
     return out
+
+def function_with_exp(arg):
+    out = arg ** 2
+    out = 2 ** out
+    return out
     
 operations = [
     function_with_addition,
     function_with_multiplication,
     function_with_dot_product,
+    function_with_exp
 ]
 
 def compare_forward_results(arg, function):
