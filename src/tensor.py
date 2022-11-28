@@ -12,14 +12,16 @@ class Tensor:
             self.a, self.b = None, None
             self.grad = np.zeros(self.value.shape)
 
+        self.shape = self.value.shape
+        self.ndim = self.value.ndim
+
     def backwards(self, queue=None):
         if queue is None:
             if self.value.ndim > 0:
-                Sum(self).backwards()
+                self.sum().backwards()
                 return None
-            else:
-                queue = []
-                self.grad = np.ones(self.value.shape)
+            queue = []
+            self.grad = np.ones(self.value.shape)
 
         if self.a is not None:
             self.backpropagate_a()
@@ -63,6 +65,12 @@ class Tensor:
     def __rmul__(self, a):
         return Mul(self.cast_to_tensor(a), self)
 
+    def __matmul__(self, b):
+        return Dot(self, self.cast_to_tensor(b))
+
+    def __rmatmul__(self, a):
+        return Dot(self.cast_to_tensor(a), self)
+
     def sum(self):
         return Sum(self)
 
@@ -92,6 +100,7 @@ class Mul(Tensor):
         gradient = self.a.value * self.grad
         self.b.grad = self.b.grad + gradient
 
+
 class Sum(Tensor):
     def __init__(self, a):
         super().__init__(a.value.sum())
@@ -99,3 +108,9 @@ class Sum(Tensor):
 
     def backpropagate_a(self):
         self.a.grad = self.a.grad + self.grad
+
+
+class Dot(Tensor):
+    def __init__(self, a, b):
+        super().__init__(a.value @ b.value)
+        self.a, self.b = a,b

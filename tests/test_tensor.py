@@ -3,8 +3,8 @@ import numpy as np
 from src.tensor import Tensor
 
 scalar = Tensor(np.random.randn(1))
-vector = Tensor(np.random.randn(1,5))
-matrix = Tensor(np.random.randn(4,5))
+vector = Tensor(np.random.randn(5,1))
+matrix = Tensor(np.random.randn(5,4))
 
 operands = [
     scalar,
@@ -25,16 +25,30 @@ def function_with_multiplication(arg):
     return out
 
 def function_with_dot_product(arg):
-    pass
+    np.random.seed(0)
+
+    if arg.ndim == 1:
+        return arg
+
+    other = np.random.uniform(size=(4,arg.shape[-2]))
+    if isinstance(arg, Tensor):
+        other = Tensor(other)
+    out = other @ arg
+    out = out @ np.random.uniform(1,2, size=(out.shape[-1], 3))
+
+    return out
+    
 
 def function_with_all_operators(arg):
     out = function_with_addition(arg)
     out = function_with_multiplication(out)
+    out = function_with_dot_product(out)
     return out
 
 operations = [
     function_with_addition,
     function_with_multiplication,
+    function_with_dot_product,
     function_with_all_operators
 ]
 

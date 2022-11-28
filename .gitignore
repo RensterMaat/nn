@@ -1,2 +1,6 @@
 *.egg-info
 data
+.pytest_cache
+.vscode
+*/__pycache__
+*.pyc
