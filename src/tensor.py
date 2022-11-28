@@ -28,7 +28,7 @@ class Tensor:
             queue = self.add_to_queue(self.a, queue)
         
         if self.b is not None:
-            self.backpropagate_b()      
+            self.backpropagate_b()   
             queue = self.add_to_queue(self.b, queue)
 
         if queue:
@@ -59,11 +59,23 @@ class Tensor:
     def __radd__(self, a):
         return Add(self.cast_to_tensor(a), self)
 
+    def __sub__(self, b):
+        return Add(self, self.cast_to_tensor(-1 * b))
+
+    def __rsub__(self, a):
+        return Add(self.cast_to_tensor(a), -1 * self)
+
     def __mul__(self, b):
         return Mul(self, self.cast_to_tensor(b))
 
     def __rmul__(self, a):
         return Mul(self.cast_to_tensor(a), self)
+
+    def __truediv__(self, b):
+        return Mul(self, self.cast_to_tensor(b ** -1))
+
+    def __rtruediv__(self, a):
+        return Mul(self.cast_to_tensor(a), self ** -1)
 
     def __matmul__(self, b):
         return Dot(self, self.cast_to_tensor(b))

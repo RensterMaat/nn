@@ -18,10 +18,20 @@ def function_with_addition(arg):
     out = 3 + out
     return out
 
+def function_with_subtraction(arg):
+    out = arg - 12
+    out = 3 - arg
+    return out
+
 def function_with_multiplication(arg):
     out = arg * arg
     out = 2 * out
     out = out * 3
+    return out
+
+def function_with_division(arg):
+    out = arg / 2
+    out = 3 / out
     return out
 
 def function_with_dot_product(arg):
@@ -45,22 +55,21 @@ def function_with_pow(arg):
     
 operations = [
     function_with_addition,
+    function_with_subtraction,
     function_with_multiplication,
+    function_with_division,
     function_with_dot_product,
     function_with_pow
 ]
-
-def compare_forward_results(arg, function):
-    tensor_result = function(arg).value
-    comparison_result = function(arg.value)
-    assert np.all(tensor_result == comparison_result)
 
 
 class TestForward:
     @pytest.mark.parametrize('operation', operations)
     @pytest.mark.parametrize('operand', operands)
     def test_all_operations_on_all_operands(self, operation, operand):
-        compare_forward_results(operand, operation)
+        tensor_result = operation(operand).value
+        comparison_result = operation(operand.value)
+        assert np.allclose(tensor_result, comparison_result)
 
 
 class TestBackpropagation:
