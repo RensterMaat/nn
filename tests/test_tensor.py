@@ -38,18 +38,10 @@ def function_with_dot_product(arg):
 
     return out
     
-
-def function_with_all_operators(arg):
-    out = function_with_addition(arg)
-    out = function_with_multiplication(out)
-    out = function_with_dot_product(out)
-    return out
-
 operations = [
     function_with_addition,
     function_with_multiplication,
     function_with_dot_product,
-    function_with_all_operators
 ]
 
 def compare_forward_results(arg, function):

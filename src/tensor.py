@@ -35,7 +35,7 @@ class Tensor:
             queue[0].backwards(queue=queue[1:])
 
     def zero_grad(self):
-        self.grad = 0
+        self.grad = np.zeros(self.value.shape)
 
     def backpropagate_a(self):
         self.a.grad = np.array(-1)
@@ -114,3 +114,11 @@ class Dot(Tensor):
     def __init__(self, a, b):
         super().__init__(a.value @ b.value)
         self.a, self.b = a,b
+
+    def backpropagate_a(self):
+        gradient = self.grad @ self.b.value.T
+        self.a.grad = self.a.grad + gradient
+
+    def backpropagate_b(self):
+        gradient = self.a.value.T @ self.grad
+        self.b.grad = self.b.grad + gradient
