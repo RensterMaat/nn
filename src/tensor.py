@@ -110,6 +110,12 @@ class Tensor:
     def sum(self):
         return Sum(self)
 
+    def min(self):
+        return Tensor(self.value.min())
+
+    def max(self):
+        return Tensor(self.value.max())
+
 
 class Add(Tensor):
     def __init__(self, a, b):
