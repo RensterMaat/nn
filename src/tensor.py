@@ -89,6 +89,24 @@ class Tensor:
     def __rpow__(self, a):
         return Pow(self.cast_to_tensor(a), self)
 
+    def __gt__(self, b):
+        return Tensor(self.value > self.cast_to_tensor(b).value)
+
+    def __ge__(self, b):
+        return Tensor(self.value >= self.cast_to_tensor(b).value)
+
+    def __lt__(self, b):
+        return Tensor(self.value < self.cast_to_tensor(b).value)
+
+    def __le__(self, b):
+        return Tensor(self.value <= self.cast_to_tensor(b).value)
+
+    def __eq__(self, b):
+        return Tensor(self.value == self.cast_to_tensor(b).value)
+
+    def __ne__(self, b):
+        return Tensor(self.value != self.cast_to_tensor(b).value)
+
     def sum(self):
         return Sum(self)
 
