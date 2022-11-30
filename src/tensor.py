@@ -100,13 +100,7 @@ class Tensor:
 
     def __le__(self, b):
         return Tensor(self.value <= self.cast_to_tensor(b).value)
-
-    def __eq__(self, b):
-        return Tensor(self.value == self.cast_to_tensor(b).value)
-
-    def __ne__(self, b):
-        return Tensor(self.value != self.cast_to_tensor(b).value)
-
+        
     def sum(self):
         return Sum(self)
 
