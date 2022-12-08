@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from src.tensor import Tensor
+from tests.util import nudge_input_at_index, get_numerical_gradient
 
 scalar = Tensor(np.random.randn(1))
 vector = Tensor(np.random.randn(5,1))
@@ -73,39 +74,15 @@ class TestForward:
 
 
 class TestBackpropagation:
-    def nudge_input_at_index(self, original, index, delta):
-        nudge = np.zeros(original.value.shape)
-        nudge[index] = delta
-        return original + nudge
-
     @pytest.mark.parametrize('operation', operations)
     @pytest.mark.parametrize('operand', operands)
     def test_all_operations_on_all_operands(self, operation, operand):
         operand.zero_grad()
 
-        original_output = operation(operand)
-        original_output.backwards()
-        autograd_calculated_gradient = operand.grad.copy()
-        
-        operand_indices = list(zip(*np.where(operand.value)))
-        delta = 0.00000000001
-        for index in operand_indices:
-            nudged_input = self.nudge_input_at_index(operand, index, delta)
-            output_after_nudge = operation(nudged_input)
+        output = operation(operand)
+        output.backwards()
 
-            dy = output_after_nudge.value.sum() - original_output.value.sum()
-            numerically_calculated_gradient = (dy) / delta
-            assert np.allclose(
-                autograd_calculated_gradient[index], 
-                numerically_calculated_gradient,
-                rtol=0,
-                atol=0.1
-            )
+        analytical_gradient = operand.grad
+        numerical_gradient = get_numerical_gradient(operation, operand, operand)
 
-
-# test vector as:
-    # bias
-    # softmax
-    # loss function
-# test matrix as:
-    # 
+        assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)

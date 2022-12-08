@@ -53,6 +53,13 @@ class Tensor:
             return Tensor(x)
         return x
 
+    def copy(self):
+        copy = Tensor(self.value.copy())
+        copy.a = self.a
+        copy.b = self.b
+        copy.grad = self.grad.copy()
+        return copy
+
     def __add__(self, b):
         return Add(self, self.cast_to_tensor(b))
 

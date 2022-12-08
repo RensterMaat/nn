@@ -25,5 +25,23 @@ input = Tensor(np.random.randn(5,24,1))
 def test_forward():
     output = network(input)
 
+
+def does_not_have_leaves_other_than_expected(node, expected):
+    if node is None:
+        return True
+    elif node in expected:
+        return True
+    elif node.a is None and node.b is None:
+        return False
+    else:
+        return does_not_have_leaves_other_than_expected(node.a, expected) \
+            and does_not_have_leaves_other_than_expected(node.b, expected)
+
 def test_parameters():
-    parameters = network.parameters()
+    parameters = list(network.parameters().values())
+
+    output = network(input)
+    expected_leaves = [input] + parameters
+
+    assert does_not_have_leaves_other_than_expected(output, expected_leaves)
+
