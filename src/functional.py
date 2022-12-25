@@ -7,6 +7,8 @@ class Linear(Module):
         self.weights = Tensor(np.random.randn(dim_out, dim_in))
         if bias:
             self.bias = Tensor(np.random.randn(dim_out, 1))
+        else:
+            self.bias = None
     
     def forward(self, x):
         out = self.weights @ x

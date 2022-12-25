@@ -3,6 +3,7 @@ import numpy as np
 from src.tensor import Tensor
 from src.module import Module
 from src.functional import Linear, ReLU, Softmax
+from tests.util import get_numerical_gradient
 
 class MLP(Module):
     def __init__(self):
@@ -15,33 +16,33 @@ class MLP(Module):
         out = self.fc1(x)
         out = self.relu(out)
         out = self.fc2(out)
-        out = self.softmax(out)
+        # out = self.softmax(out)
+        out = out.sum()
         return out
 
 
 network = MLP()
-input = Tensor(np.random.randn(5,24,1))
+input_tensor = Tensor(np.random.randn(3,24,1))
 
 def test_forward():
-    output = network(input)
+    network(input_tensor)
+
+def test_backwards():
+    output = network(input_tensor)
+    output.backwards()
+
+    parameters = network.parameters()
+
+    for name, parameter in parameters.items():
+        numerical_gradient = get_numerical_gradient(network, input_tensor, parameter)
+        analytical_gradient = parameter.grad
 
 
-def does_not_have_leaves_other_than_expected(node, expected):
-    if node is None:
-        return True
-    elif node in expected:
-        return True
-    elif node.a is None and node.b is None:
-        return False
-    else:
-        return does_not_have_leaves_other_than_expected(node.a, expected) \
-            and does_not_have_leaves_other_than_expected(node.b, expected)
+        print(
+            'Parameter: {}\n'.format(name),
+            'Numerical: {}\n'.format(numerical_gradient[0]),
+            'Analytical: {}\n'.format(analytical_gradient[1]),
+        )
+        # assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)
 
-def test_parameters():
-    parameters = list(network.parameters().values())
-
-    output = network(input)
-    expected_leaves = [input] + parameters
-
-    assert does_not_have_leaves_other_than_expected(output, expected_leaves)
-
+test_backwards()

@@ -34,6 +34,10 @@ class Tensor:
         if queue:
             queue[0].backwards(queue=queue[1:])
 
+    def add_gradient(self, gradient_to_add):
+        if gradient_to_add.ndim == self.grad.ndim + 1:
+            self.grad += gradient_to_add.sum(axis=-gradient_to_add.ndim)
+
     def zero_grad(self):
         self.grad = np.zeros(self.value.shape)
 
@@ -107,6 +111,9 @@ class Tensor:
 
     def __le__(self, b):
         return Tensor(self.value <= self.cast_to_tensor(b).value)
+
+    def __str__(self):
+        return f'Tensor({self.value}), grad_fn={type(self).__name__}'
         
     def sum(self):
         return Sum(self)
@@ -159,11 +166,11 @@ class Dot(Tensor):
         self.a, self.b = a,b
 
     def backpropagate_a(self):
-        gradient = self.grad @ self.b.value.T
+        gradient = self.grad @ self.b.value.swapaxes(-2, -1)
         self.a.grad = self.a.grad + gradient
 
     def backpropagate_b(self):
-        gradient = self.a.value.T @ self.grad
+        gradient = self.a.value.swapaxes(-2,-1) @ self.grad
         self.b.grad = self.b.grad + gradient
 
 

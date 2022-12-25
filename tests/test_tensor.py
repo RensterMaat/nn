@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from src.tensor import Tensor
-from tests.util import nudge_input_at_index, get_numerical_gradient
+from tests.util import get_numerical_gradient
 
 scalar = Tensor(np.random.randn(1))
 vector = Tensor(np.random.randn(5,1))
