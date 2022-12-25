@@ -16,7 +16,6 @@ class MLP(Module):
         out = self.fc1(x)
         out = self.relu(out)
         out = self.fc2(out)
-        # out = self.softmax(out)
         out = out.sum()
         return out
 
@@ -37,12 +36,5 @@ def test_backwards():
         numerical_gradient = get_numerical_gradient(network, input_tensor, parameter)
         analytical_gradient = parameter.grad
 
+        assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)
 
-        print(
-            'Parameter: {}\n'.format(name),
-            'Numerical: {}\n'.format(numerical_gradient[0]),
-            'Analytical: {}\n'.format(analytical_gradient[1]),
-        )
-        # assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)
-
-test_backwards()

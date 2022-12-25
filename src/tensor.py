@@ -37,6 +37,8 @@ class Tensor:
     def add_gradient(self, gradient_to_add):
         if gradient_to_add.ndim == self.grad.ndim + 1:
             self.grad += gradient_to_add.sum(axis=-gradient_to_add.ndim)
+        else:
+            self.grad += gradient_to_add
 
     def zero_grad(self):
         self.grad = np.zeros(self.value.shape)
@@ -131,10 +133,10 @@ class Add(Tensor):
         self.a, self.b = a, b
 
     def backpropagate_a(self):
-        self.a.grad = self.a.grad + self.grad
+        self.a.add_gradient(self.grad)
 
     def backpropagate_b(self):
-        self.b.grad = self.b.grad + self.grad
+        self.b.add_gradient(self.grad)
 
 
 class Mul(Tensor):
@@ -144,11 +146,11 @@ class Mul(Tensor):
 
     def backpropagate_a(self):
         gradient = self.b.value * self.grad
-        self.a.grad = self.a.grad + gradient
+        self.a.add_gradient(gradient)
 
     def backpropagate_b(self):
         gradient = self.a.value * self.grad
-        self.b.grad = self.b.grad + gradient
+        self.b.add_gradient(gradient)
 
 
 class Sum(Tensor):
@@ -157,7 +159,7 @@ class Sum(Tensor):
         self.a = a
 
     def backpropagate_a(self):
-        self.a.grad = self.a.grad + self.grad
+        self.a.add_gradient(self.grad)
 
 
 class Dot(Tensor):
@@ -167,11 +169,11 @@ class Dot(Tensor):
 
     def backpropagate_a(self):
         gradient = self.grad @ self.b.value.swapaxes(-2, -1)
-        self.a.grad = self.a.grad + gradient
+        self.a.add_gradient(gradient)
 
     def backpropagate_b(self):
         gradient = self.a.value.swapaxes(-2,-1) @ self.grad
-        self.b.grad = self.b.grad + gradient
+        self.b.add_gradient(gradient)
 
 
 class Pow(Tensor):
@@ -181,8 +183,8 @@ class Pow(Tensor):
 
     def backpropagate_a(self):
         gradient = self.b.value * self.a.value ** (self.b.value-1) * self.grad
-        self.a.grad = self.a.grad + gradient
+        self.a.add_gradient(gradient)
 
     def backpropagate_b(self):
         gradient = np.log(self.a.value) * self.a.value ** self.b.value * self.grad
-        self.b.grad = self.b.grad + gradient
+        self.b.add_gradient(gradient)
