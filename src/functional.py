@@ -29,3 +29,10 @@ class Softmax(Module):
         numerator = np.e ** z
         denominator = numerator.sum()
         return numerator/denominator
+
+
+class MSELoss:
+    def __call__(self, y, y_hat):
+        squared_errors = (y - y_hat) ** 2
+        mse = squared_errors.sum() #/ y.shape[0]
+        return mse
