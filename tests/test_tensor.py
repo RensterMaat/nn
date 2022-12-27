@@ -86,3 +86,20 @@ class TestBackpropagation:
         numerical_gradient = get_numerical_gradient(operation, operand, operand)
 
         assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)
+
+    @pytest.mark.parametrize('axis', range(5))
+    def test_summation_across_all_axes(self, axis):
+        operand = Tensor(np.random.randn(1,2,3,4,1))
+
+        output = operand.sum(axis) ** 2
+        output.backwards()
+
+        analytical_gradient = operand.grad
+        numerical_gradient = get_numerical_gradient(
+            lambda x: x.sum(axis) ** 2, 
+            operand, 
+            operand
+        )
+
+        assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)
+    

@@ -36,9 +36,9 @@ class Tensor:
 
     def add_gradient(self, gradient_to_add):
         if gradient_to_add.ndim == self.grad.ndim + 1:
-            self.grad += gradient_to_add.sum(axis=-gradient_to_add.ndim)
+            self.grad = self.grad + gradient_to_add.sum(axis=-gradient_to_add.ndim)
         else:
-            self.grad += gradient_to_add
+            self.grad = self.grad + gradient_to_add
 
     def zero_grad(self):
         self.grad = np.zeros(self.value.shape)
@@ -117,8 +117,8 @@ class Tensor:
     def __str__(self):
         return f'Tensor({self.value}), grad_fn={type(self).__name__}'
         
-    def sum(self):
-        return Sum(self)
+    def sum(self, axis=None):
+        return Sum(self, axis)
 
     def min(self):
         return Tensor(self.value.min())
@@ -154,12 +154,22 @@ class Mul(Tensor):
 
 
 class Sum(Tensor):
-    def __init__(self, a):
-        super().__init__(a.value.sum())
+    def __init__(self, a, axis=None):
+        super().__init__(a.value.sum(axis))
         self.a = a
+        self.axis = axis
 
     def backpropagate_a(self):
-        self.a.add_gradient(self.grad)
+        if self.axis:
+            gradient = np.expand_dims(
+                self.grad, self.axis
+            ).repeat(
+                self.a.shape[self.axis], 
+                self.axis
+            )
+        else:
+            gradient = self.grad
+        self.a.add_gradient(gradient)
 
 
 class Dot(Tensor):
@@ -188,3 +198,15 @@ class Pow(Tensor):
     def backpropagate_b(self):
         gradient = np.log(self.a.value) * self.a.value ** self.b.value * self.grad
         self.b.add_gradient(gradient)
+
+
+class SwapAxes(Tensor):
+    def __init__(self, a, axis1, axis2):
+        super().__init__(a.value.swapaxes(axis1, axis2))
+        self.a = a
+        self.axis1 = axis2
+        self.axis2 = axis2
+
+    def backpropagate_a(self):
+        gradient = self.grad.swapaxis(self.axis1, self.axis2)
+        self.a.add_gradient(gradient)

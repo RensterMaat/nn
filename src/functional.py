@@ -34,5 +34,5 @@ class Softmax(Module):
 class MSELoss:
     def __call__(self, y, y_hat):
         squared_errors = (y - y_hat) ** 2
-        mse = squared_errors.sum() #/ y.shape[0]
+        mse = squared_errors.sum() / y.shape[0]
         return mse
