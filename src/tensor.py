@@ -34,6 +34,9 @@ class Tensor:
         if queue:
             queue[0].backwards(queue=queue[1:])
 
+    def determine_backpropagation_order(self):
+        
+
     def add_gradient(self, gradient_to_add):
         # if gradient_to_add.ndim == self.grad.ndim + 1:
         #     self.grad = self.grad + gradient_to_add.sum(axis=-gradient_to_add.ndim)
