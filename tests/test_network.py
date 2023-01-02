@@ -9,11 +9,12 @@ class MLP(Module):
     def __init__(self):
         self.fc1 = Linear(24, 12)
         self.relu = ReLU()
-        self.fc2 = Linear(12,1)
+        self.fc2 = Linear(12,6)
         self.softmax = Softmax()
 
     def forward(self, x):
-        out = self.fc1(x)
+        out = x
+        out = self.fc1(out)
         out = self.relu(out)
         out = self.fc2(out)
         out = self.softmax(out)
@@ -21,7 +22,7 @@ class MLP(Module):
 
 
 input_tensor = Tensor(np.random.randn(3,24,1))
-target = Tensor(np.zeros((3,1)))
+target = Tensor(np.zeros((3,6,1)))
 
 network = MLP()
 criterion = MSELoss()
@@ -31,14 +32,18 @@ def test_forward():
 
 def test_backwards():
     output = network(input_tensor)
+    # output.backwards()
     loss = criterion(target, output)
     loss.backwards()
 
     parameters = network.parameters()
 
-    for parameter in parameters.values():
+    for parameter in list(parameters.values()):
         numerical_gradient = get_numerical_gradient(
-            lambda x: criterion(target, network(x)), input_tensor, parameter
+            lambda x: criterion(target, network(x)), 
+            # lambda x: network(x),
+            input_tensor, 
+            parameter
         )
         analytical_gradient = parameter.grad
 

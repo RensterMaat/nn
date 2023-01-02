@@ -35,10 +35,37 @@ class Tensor:
             queue[0].backwards(queue=queue[1:])
 
     def add_gradient(self, gradient_to_add):
-        if gradient_to_add.ndim == self.grad.ndim + 1:
-            self.grad = self.grad + gradient_to_add.sum(axis=-gradient_to_add.ndim)
-        else:
-            self.grad = self.grad + gradient_to_add
+        # if gradient_to_add.ndim == self.grad.ndim + 1:
+        #     self.grad = self.grad + gradient_to_add.sum(axis=-gradient_to_add.ndim)
+        # else:
+        #     self.grad = self.grad + gradient_to_add
+        gradient_to_add = self.undo_broadcasting(gradient_to_add)
+        self.grad = self.grad + gradient_to_add
+
+    def undo_broadcasting(self, gradient_to_add):
+        axes = list(range(len(gradient_to_add.shape)))
+
+        unmatched_axes = axes[:len(gradient_to_add.shape)-len(self.grad.shape)]
+        matched_axes = axes[len(gradient_to_add.shape)-len(self.grad.shape):]
+
+        expanded_axes = []
+        for axis in matched_axes:
+            if self.grad.shape[axis - len(unmatched_axes)] == gradient_to_add.shape[axis]:
+                continue
+            elif self.grad.shape[axis - len(unmatched_axes)] == 1:
+                expanded_axes.append(axis)
+            else:
+                raise Exception('Arrays could not have been broadcasted')
+
+        unmatched_axes.reverse(), expanded_axes.reverse()
+
+        for axis in expanded_axes:
+            gradient_to_add = np.expand_dims(gradient_to_add.sum(axis), axis)
+
+        for axis in unmatched_axes:
+            gradient_to_add = gradient_to_add.sum(axis)
+
+        return gradient_to_add
 
     def zero_grad(self):
         self.grad = np.zeros(self.value.shape)
@@ -124,7 +151,10 @@ class Tensor:
         return Tensor(self.value.min())
 
     def max(self):
-        return Tensor(self.value.max())
+        return Max(self)
+
+    def swapaxes(self, axis1, axis2):
+        return SwapAxes(self, axis1, axis2)
 
 
 class Add(Tensor):
@@ -160,7 +190,7 @@ class Sum(Tensor):
         self.axis = axis
 
     def backpropagate_a(self):
-        if self.axis:
+        if self.axis is not None:
             gradient = np.expand_dims(
                 self.grad, self.axis
             ).repeat(
@@ -168,7 +198,7 @@ class Sum(Tensor):
                 self.axis
             )
         else:
-            gradient = self.grad
+            gradient = np.ones(self.a.shape) * self.grad
         self.a.add_gradient(gradient)
 
 
@@ -204,9 +234,33 @@ class SwapAxes(Tensor):
     def __init__(self, a, axis1, axis2):
         super().__init__(a.value.swapaxes(axis1, axis2))
         self.a = a
-        self.axis1 = axis2
+        self.axis1 = axis1
         self.axis2 = axis2
 
     def backpropagate_a(self):
-        gradient = self.grad.swapaxis(self.axis1, self.axis2)
+        gradient = self.grad.swapaxes(self.axis2, self.axis1)
+        self.a.add_gradient(gradient)
+
+
+class Max(Tensor):
+    def __init__(self, a):
+        super().__init__(a.value.max())
+        self.a = a
+        self.idx_max = np.unravel_index(a.value.argmax(), a.shape)
+
+    def backpropagate_a(self):
+        gradient = np.zeros(self.a.shape)
+        gradient[self.idx_max] = self.grad
+        self.a.add_gradient(gradient)
+
+
+class Min(Tensor):
+    def __init__(self, a):
+        super().__init__(a.value.min())
+        self.a = a
+        self.idx_min = np.unravel_index(a.value.argmin(), a.shape)
+
+    def backpropagate_a(self):
+        gradient = np.zeros(self.a.shape)
+        gradient[self.idx_min] = self.grad
         self.a.add_gradient(gradient)

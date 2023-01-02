@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from src.tensor import Tensor
+from src.functional import Softmax
 from tests.util import get_numerical_gradient
 
 scalar = Tensor(np.random.randn(1))
@@ -97,6 +98,54 @@ class TestBackpropagation:
         analytical_gradient = operand.grad
         numerical_gradient = get_numerical_gradient(
             lambda x: x.sum(axis) ** 2, 
+            operand, 
+            operand
+        )
+
+        assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)
+
+    @pytest.mark.parametrize('axis1', range(5))
+    def test_swapaxes_across_all_axes(self, axis1):
+        operand = Tensor(np.random.randn(1,2,3,4,1))
+
+        output = operand.swapaxes(axis1, 2) ** 2
+        output.backwards()
+
+        analytical_gradient = operand.grad
+        numerical_gradient = get_numerical_gradient(
+            lambda x: x.swapaxes(axis1, 2) ** 2, 
+            operand, 
+            operand
+        )
+
+        assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)
+
+    def test_max(self):
+        operand = Tensor(np.random.randn(6,1))
+
+        function = lambda x: (x - x.max()) ** 2
+
+        output = function(operand)
+        output.backwards()
+
+        analytical_gradient = operand.grad
+        numerical_gradient = get_numerical_gradient(
+            function,
+            operand, 
+            operand
+        )
+
+        assert np.allclose(analytical_gradient, numerical_gradient, rtol=1e-4)
+
+    def test_softmax(self):
+        operand = Tensor(np.random.randn(10,1))
+
+        output = Softmax()(operand) ** 2
+        output.backwards()
+
+        analytical_gradient = operand.grad
+        numerical_gradient = get_numerical_gradient(
+            lambda x: Softmax()(x) ** 2, 
             operand, 
             operand
         )
