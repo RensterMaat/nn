@@ -15,27 +15,56 @@ class Tensor:
         self.shape = self.value.shape
         self.ndim = self.value.ndim
 
-    def backwards(self, queue=None):
-        if queue is None:
-            if self.value.ndim > 0:
-                self.sum().backwards()
-                return None
-            queue = []
-            self.grad = np.ones(self.value.shape)
+    def backwards(self):
+        if self.value.ndim > 0:
+            self.sum().backwards()
+            return None
 
-        if self.a is not None:
-            self.backpropagate_a()
-            queue = self.add_to_queue(self.a, queue)
-        
-        if self.b is not None:
-            self.backpropagate_b()   
-            queue = self.add_to_queue(self.b, queue)
+        order = self.determine_backpropagation_order()
 
-        if queue:
-            queue[0].backwards(queue=queue[1:])
+        self.grad = 1
+
+        for node in order:
+            if node.a is not None:
+                node.backpropagate_a()
+
+            if node.b is not None:
+                node.backpropagate_b()
 
     def determine_backpropagation_order(self):
+        a_order, b_order = [],[]
+
+        if self.a:
+            a_order = self.a.determine_backpropagation_order()
         
+        if self.b:
+            b_order = self.b.determine_backpropagation_order()
+
+        combined_order = self.topologically_ordered_merge(a_order, b_order)
+
+        return [self] + combined_order
+
+    def topologically_ordered_merge(self, a_order, b_order):
+        b_node_vs_index = {node:index for (index,node) in enumerate(b_order)}
+
+        merged = []
+        a_pointer, b_pointer = 0,0
+        for a_index, a_node in enumerate(a_order):
+            if a_node in b_node_vs_index:
+                b_index = b_node_vs_index[a_node]
+
+                merged.extend(a_order[a_pointer:a_index])
+                merged.extend(b_order[b_pointer:b_index])
+                merged.extend([a_node])
+
+                a_pointer = a_index + 1
+                b_pointer = b_index + 1
+
+        merged.extend(a_order[a_pointer:])
+        merged.extend(b_order[b_pointer:])
+
+        return merged
+
 
     def add_gradient(self, gradient_to_add):
         # if gradient_to_add.ndim == self.grad.ndim + 1:
