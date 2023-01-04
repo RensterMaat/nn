@@ -21,5 +21,9 @@ class Module(ABC):
 
         return parameters
 
+    def zero_grad(self):
+        for parameter in self.parameters().values():
+            parameter.zero_grad()
+
 
 

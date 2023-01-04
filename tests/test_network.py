@@ -32,7 +32,6 @@ def test_forward():
 
 def test_backwards():
     output = network(input_tensor)
-    # output.backwards()
     loss = criterion(target, output)
     loss.backwards()
 
@@ -41,7 +40,6 @@ def test_backwards():
     for parameter in list(parameters.values()):
         numerical_gradient = get_numerical_gradient(
             lambda x: criterion(target, network(x)), 
-            # lambda x: network(x),
             input_tensor, 
             parameter
         )

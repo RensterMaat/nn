@@ -27,7 +27,6 @@ class Softmax(Module):
     def forward(self, x):
         z = x - x.max()
         numerator = np.e ** z
-        # return numerator
         denominator = numerator.sum(axis=-2)
         return (numerator.swapaxes(0,1) / denominator).swapaxes(0,1)
 
