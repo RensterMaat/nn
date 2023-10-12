@@ -79,3 +79,5 @@ import matplotlib.pyplot as plt
 plt.plot(range(int(n_batches * epochs)), losses)
 plt.show()
 ```
+
+![download](https://github.com/RensterMaat/nn/assets/55526770/47548f5c-7e1d-4085-93f2-8a6be577925e)
