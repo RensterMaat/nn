@@ -28,9 +28,16 @@ network = MLP()
 criterion = MSELoss()
 
 def test_forward():
+    """
+    Tests whether the forward pass of the network runs without errors.
+    """
     network(input_tensor)
 
 def test_backwards():
+    """
+    Tests whether the backward pass of the network results in analytical gradients
+    that are close to the numerical gradients.
+    """
     output = network(input_tensor)
     loss = criterion(target, output)
     loss.backwards()
