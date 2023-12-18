@@ -1,4 +1,4 @@
-from tensor import Tensor
+from src.tensor import Tensor
 from typing import Dict
 
 

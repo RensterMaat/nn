@@ -1,6 +1,20 @@
 # Neural networks from basic linear algebra operations
 The API follows the style of PyTorch. An example is shown below.
 
+## Installation
+
+Step 1. Clone the repository and enter the directory
+```bash
+git clone https://github.com/RensterMaat/nn.git
+cd nn
+```
+
+Step 2. Install using pip
+```bash
+pip install .
+```
+
+## Usage
 ### 1. Set up the model
 
 ```python
