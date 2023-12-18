@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Union, List, Optional
 
 
 class Tensor:
@@ -15,7 +16,7 @@ class Tensor:
         ndim (int): The number of dimensions of the tensor.
     """
 
-    def __init__(self, value):
+    def __init__(self, value: Union[int, float, bool, np.ndarray, "Tensor"]):
         """
         Initialize the Tensor object.
 
@@ -36,7 +37,7 @@ class Tensor:
         self.shape = self.value.shape
         self.ndim = self.value.ndim
 
-    def backwards(self):
+    def backwards(self) -> None:
         """
         Perform backpropagation to compute gradients for all tensors in the computational graph.
         """
@@ -55,7 +56,7 @@ class Tensor:
             if node.b is not None:
                 node.backpropagate_b()
 
-    def determine_backpropagation_order(self):
+    def determine_backpropagation_order(self) -> List["Tensor"]:
         """
         Determine the order of tensors for backpropagation.
 
@@ -74,7 +75,9 @@ class Tensor:
 
         return [self] + combined_order
 
-    def topologically_ordered_merge(self, a_order, b_order):
+    def topologically_ordered_merge(
+        self, a_order: List["Tensor"], b_order: List["Tensor"]
+    ) -> List["Tensor"]:
         """
         Merge two lists of tensors maintaining topological order.
 
@@ -105,7 +108,7 @@ class Tensor:
 
         return merged
 
-    def add_gradient(self, gradient_to_add):
+    def add_gradient(self, gradient_to_add: np.ndarray) -> None:
         """
         Add a gradient to the tensor's gradient.
 
@@ -115,7 +118,7 @@ class Tensor:
         gradient_to_add = self.undo_broadcasting(gradient_to_add)
         self.grad = self.grad + gradient_to_add
 
-    def undo_broadcasting(self, gradient_to_add):
+    def undo_broadcasting(self, gradient_to_add: np.ndarray) -> np.ndarray:
         """
         Adjust the gradient shape to match the tensor's shape, reversing any broadcasting that occurred during forward pass.
 
@@ -152,33 +155,27 @@ class Tensor:
 
         return gradient_to_add
 
-    def zero_grad(self):
+    def zero_grad(self) -> None:
         """
         Reset the gradient of the tensor to zero.
         """
         self.grad = np.zeros(self.value.shape)
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate the gradient to the first operand.
         """
         self.a.grad = np.array(-1)
 
-    def backpropagate_b(self):
+    def backpropagate_b(self) -> None:
         """
         Backpropagate the gradient to the second operand.
         """
         self.b.grad = np.array(-1)
 
-    def add_to_queue(self, el, queue):
-        """
-        Add an element to a queue if it is not None and not already in the queue.
-        """
-        if not el is None and not el in queue:
-            return queue + [el]
-        return queue
-
-    def cast_to_tensor(self, x):
+    def cast_to_tensor(
+        self, x: Union[int, float, bool, np.ndarray, "Tensor"]
+    ) -> "Tensor":
         """
         Cast a value to a Tensor object if it is not already a Tensor object.
 
@@ -189,7 +186,7 @@ class Tensor:
             return Tensor(x)
         return x
 
-    def copy(self):
+    def copy(self) -> "Tensor":
         """
         Return a copy of the tensor.
 
@@ -202,67 +199,67 @@ class Tensor:
         copy.grad = self.grad.copy()
         return copy
 
-    def __add__(self, b):
+    def __add__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Add":
         return Add(self, self.cast_to_tensor(b))
 
-    def __radd__(self, a):
+    def __radd__(self, a: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Add":
         return Add(self.cast_to_tensor(a), self)
 
-    def __sub__(self, b):
+    def __sub__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Add":
         return Add(self, self.cast_to_tensor(-1 * b))
 
-    def __rsub__(self, a):
+    def __rsub__(self, a: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Add":
         return Add(self.cast_to_tensor(a), -1 * self)
 
-    def __mul__(self, b):
+    def __mul__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Mul":
         return Mul(self, self.cast_to_tensor(b))
 
-    def __rmul__(self, a):
+    def __rmul__(self, a: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Mul":
         return Mul(self.cast_to_tensor(a), self)
 
-    def __truediv__(self, b):
+    def __truediv__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Mul":
         return Mul(self, self.cast_to_tensor(b**-1))
 
-    def __rtruediv__(self, a):
+    def __rtruediv__(self, a: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Mul":
         return Mul(self.cast_to_tensor(a), self**-1)
 
-    def __matmul__(self, b):
+    def __matmul__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Dot":
         return Dot(self, self.cast_to_tensor(b))
 
-    def __rmatmul__(self, a):
+    def __rmatmul__(self, a: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Dot":
         return Dot(self.cast_to_tensor(a), self)
 
-    def __pow__(self, b):
+    def __pow__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Pow":
         return Pow(self, self.cast_to_tensor(b))
 
-    def __rpow__(self, a):
+    def __rpow__(self, a: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Pow":
         return Pow(self.cast_to_tensor(a), self)
 
-    def __gt__(self, b):
+    def __gt__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Tensor":
         return Tensor(self.value > self.cast_to_tensor(b).value)
 
-    def __ge__(self, b):
+    def __ge__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Tensor":
         return Tensor(self.value >= self.cast_to_tensor(b).value)
 
-    def __lt__(self, b):
+    def __lt__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Tensor":
         return Tensor(self.value < self.cast_to_tensor(b).value)
 
-    def __le__(self, b):
+    def __le__(self, b: Union[int, float, bool, np.ndarray, "Tensor"]) -> "Tensor":
         return Tensor(self.value <= self.cast_to_tensor(b).value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Tensor({self.value}), grad_fn={type(self).__name__}"
 
-    def sum(self, axis=None):
+    def sum(self, axis: Optional[int] = None) -> "Sum":
         return Sum(self, axis)
 
-    def min(self):
+    def min(self) -> "Tensor":
         return Tensor(self.value.min())
 
-    def max(self):
+    def max(self) -> "Tensor":
         return Max(self)
 
-    def swapaxes(self, axis1, axis2):
+    def swapaxes(self, axis1: int, axis2: int) -> "SwapAxes":
         return SwapAxes(self, axis1, axis2)
 
 
@@ -273,7 +270,7 @@ class Add(Tensor):
     Inherits from Tensor and represents the addition of two tensors.
     """
 
-    def __init__(self, a, b):
+    def __init__(self, a: "Tensor", b: "Tensor") -> None:
         """
         Initialize the Add operation.
 
@@ -284,13 +281,13 @@ class Add(Tensor):
         super().__init__(a.value + b.value)
         self.a, self.b = a, b
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate through the first operand.
         """
         self.a.add_gradient(self.grad)
 
-    def backpropagate_b(self):
+    def backpropagate_b(self) -> None:
         """
         Backpropagate through the second operand.
         """
@@ -307,7 +304,7 @@ class Mul(Tensor):
         a, b (Tensor): The tensors from which this tensor was derived.
     """
 
-    def __init__(self, a, b):
+    def __init__(self, a: "Tensor", b: "Tensor") -> None:
         """
         Initialize the Mul operation.
 
@@ -318,7 +315,7 @@ class Mul(Tensor):
         super().__init__(a.value * b.value)
         self.a, self.b = a, b
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate through the first operand.
 
@@ -328,7 +325,7 @@ class Mul(Tensor):
         gradient = self.b.value * self.grad
         self.a.add_gradient(gradient)
 
-    def backpropagate_b(self):
+    def backpropagate_b(self) -> None:
         """
         Backpropagate through the second operand.
 
@@ -350,12 +347,12 @@ class Sum(Tensor):
         axis (int): The axis along which the summation was performed.
     """
 
-    def __init__(self, a, axis=None):
+    def __init__(self, a: "Tensor", axis: Optional[int] = None) -> None:
         super().__init__(a.value.sum(axis))
         self.a = a
         self.axis = axis
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate through the first and only operand.
 
@@ -380,11 +377,11 @@ class Dot(Tensor):
         a, b (Tensor): The tensors from which this tensor was derived.
     """
 
-    def __init__(self, a, b):
+    def __init__(self, a: "Tensor", b: "Tensor") -> None:
         super().__init__(a.value @ b.value)
         self.a, self.b = a, b
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate through the first operand.
 
@@ -394,7 +391,7 @@ class Dot(Tensor):
         gradient = self.grad @ self.b.value.swapaxes(-2, -1)
         self.a.add_gradient(gradient)
 
-    def backpropagate_b(self):
+    def backpropagate_b(self) -> None:
         """
         Backpropagate through the second operand.
 
@@ -415,11 +412,11 @@ class Pow(Tensor):
         a, b (Tensor): The tensors from which this tensor was derived.
     """
 
-    def __init__(self, a, b):
+    def __init__(self, a: "Tensor", b: "Tensor") -> None:
         super().__init__(a.value**b.value)
         self.a, self.b = a, b
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate through the first operand.
 
@@ -428,7 +425,7 @@ class Pow(Tensor):
         gradient = self.b.value * self.a.value ** (self.b.value - 1) * self.grad
         self.a.add_gradient(gradient)
 
-    def backpropagate_b(self):
+    def backpropagate_b(self) -> None:
         """
         Backpropagate through the second operand.
 
@@ -449,13 +446,13 @@ class SwapAxes(Tensor):
         axis1, axis2 (int): The axes to be swapped.
     """
 
-    def __init__(self, a, axis1, axis2):
+    def __init__(self, a: "Tensor", axis1: int, axis2: int) -> None:
         super().__init__(a.value.swapaxes(axis1, axis2))
         self.a = a
         self.axis1 = axis1
         self.axis2 = axis2
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate through the first and only operand.
 
@@ -472,12 +469,12 @@ class Max(Tensor):
     Inherits from Tensor and represents the max of a tensor.
     """
 
-    def __init__(self, a):
+    def __init__(self, a: "Tensor") -> None:
         super().__init__(a.value.max())
         self.a = a
         self.idx_max = np.unravel_index(a.value.argmax(), a.shape)
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate through the first and only operand.
 
@@ -495,12 +492,12 @@ class Min(Tensor):
     Inherits from Tensor and represents the min of a tensor.
     """
 
-    def __init__(self, a):
+    def __init__(self, a: "Tensor") -> None:
         super().__init__(a.value.min())
         self.a = a
         self.idx_min = np.unravel_index(a.value.argmin(), a.shape)
 
-    def backpropagate_a(self):
+    def backpropagate_a(self) -> None:
         """
         Backpropagate through the first and only operand.
 

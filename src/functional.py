@@ -1,6 +1,7 @@
 import numpy as np
 from src.tensor import Tensor
 from src.module import Module
+from typing import Optional
 
 
 class Linear(Module):
@@ -11,14 +12,14 @@ class Linear(Module):
     addition. The layer has two learnable parameters: weights and bias.
     """
 
-    def __init__(self, dim_in, dim_out, bias=True):
+    def __init__(self, dim_in: int, dim_out: int, bias: Optional[bool] = True) -> None:
         self.weights = Tensor(np.random.randn(dim_out, dim_in))
         if bias:
             self.bias = Tensor(np.random.randn(dim_out, 1))
         else:
             self.bias = None
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         """
         Performs forward pass of the input.
 
@@ -39,7 +40,7 @@ class ReLU(Module):
     relu(x) = max(0, x)
     """
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         """
         Performs forward pass of the input.
 
@@ -58,7 +59,7 @@ class Softmax(Module):
     softmax(x) = e^x / sum(e^x)
     """
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         """
         Performs forward pass of the input.
 
@@ -79,7 +80,7 @@ class MSELoss:
     mse = sum((y - y_hat)^2) / n
     """
 
-    def __call__(self, y, y_hat):
+    def __call__(self, y: Tensor, y_hat: Tensor) -> Tensor:
         squared_errors = (y - y_hat) ** 2
         mse = squared_errors.sum() / y.shape[0]
         return mse

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from src.tensor import Tensor
+from typing import Dict
 
 
 class Module(ABC):
@@ -10,7 +11,7 @@ class Module(ABC):
     """
 
     @abstractmethod
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         """
         Defines the forward computation performed at every call.
 
@@ -21,7 +22,7 @@ class Module(ABC):
         """
         pass
 
-    def __call__(self, x):
+    def __call__(self, x: Tensor) -> Tensor:
         """
         Calling an instance of a Module is the same as calling its forward method.
 
@@ -30,7 +31,7 @@ class Module(ABC):
         """
         return self.forward(x)
 
-    def parameters(self):
+    def parameters(self) -> Dict[str, Tensor]:
         """
         Returns a dictionary containing all learnable parameters of the module and their names.
 
@@ -49,7 +50,7 @@ class Module(ABC):
 
         return parameters
 
-    def zero_grad(self):
+    def zero_grad(self) -> None:
         """
         Sets the gradients of all learnable parameters to zero.
         """

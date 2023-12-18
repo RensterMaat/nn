@@ -1,7 +1,10 @@
 import numpy as np
+from typing import Any, Tuple
 
 
-def nudge_input_at_index(original, index, delta):
+def nudge_input_at_index(
+    original: np.ndarray, index: Tuple[int, ...], delta: float
+) -> np.ndarray:
     """
     Returns a copy of the original array with the value at the given index nudged by delta.
     """
@@ -10,7 +13,9 @@ def nudge_input_at_index(original, index, delta):
     return original + nudge
 
 
-def get_numerical_gradient(function, input, parameter, delta_input=1e-6):
+def get_numerical_gradient(
+    function: Any, input: np.ndarray, parameter: Any, delta_input: float = 1e-6
+) -> np.ndarray:
     """
     Returns the numerical gradient of the given function with respect to the given parameter.
     """
