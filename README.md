@@ -1,5 +1,5 @@
 # Neural networks from basic linear algebra operations
-The API follows the style of PyTorch. An example is shown below.
+A PyTorch-style implementation of neural networks using only NumPy as a dependency. This library wraps the NumPy array and adds functionality for calculating gradients. Furthermore, implementations are provided of a linear layer, non-linearity (ReLU), softmax, mean squared error loss and the stochastic gradient descent optimizer. 
 
 ## Installation
 
