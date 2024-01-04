@@ -41,14 +41,21 @@ class Tensor:
         """
         Perform backpropagation to compute gradients for all tensors in the computational graph.
         """
+
+        # Backpropagation is only defined for scalar outputs, not for vector or matrix outputs.
+        # If the output is not a scalar, we sum the output to make it a scalar.
         if self.value.ndim > 0:
             self.sum().backwards()
             return None
 
+        # Backpropagation order must be preserved in order to compute gradients correctly.
+        # The order is determined by performing a topological sort on the computational graph.
         order = self.determine_backpropagation_order()
 
+        # The gradient of the output node to itself is 1. This provides the root node for backpropagation.
         self.grad = 1
 
+        # Backpropagate the gradient to all tensors in the computational graph.
         for node in order:
             if node.a is not None:
                 node.backpropagate_a()
@@ -58,28 +65,34 @@ class Tensor:
 
     def determine_backpropagation_order(self) -> List["Tensor"]:
         """
-        Determine the order of tensors for backpropagation.
+        Recursively determine the order of tensors for backpropagation.
 
         Returns:
             list: Ordered list of tensors for backpropagation.
         """
+
+        # Determine the order for the first and second operands (if any).
         a_order, b_order = [], []
 
+        # This is done by recursively calling determine_backpropagation_order on the operands.
         if self.a:
             a_order = self.a.determine_backpropagation_order()
 
         if self.b:
             b_order = self.b.determine_backpropagation_order()
 
+        # The order of nodes leading to the first and second operand must be sorted topologically
+        # to ensure proper gradient backpropagation.
         combined_order = self.topologically_ordered_merge(a_order, b_order)
 
+        # Add the current node to the head of the list.
         return [self] + combined_order
 
     def topologically_ordered_merge(
         self, a_order: List["Tensor"], b_order: List["Tensor"]
     ) -> List["Tensor"]:
         """
-        Merge two lists of tensors maintaining topological order.
+        Topologically merge two lists of already topologically ordered tensors.
 
         Args:
             a_order (list): The first list of tensors.
@@ -88,21 +101,31 @@ class Tensor:
         Returns:
             list: The merged list of tensors in topological order.
         """
+
+        # Create a dictionary mapping each node to its index in the list.
+        # This makes it easy to find if a node is in the list and what its index is.
         b_node_vs_index = {node: index for (index, node) in enumerate(b_order)}
 
-        merged = []
-        a_pointer, b_pointer = 0, 0
+        merged = []  # Initialize the merged list.
+        a_pointer, b_pointer = 0, 0  # Initialize pointers to the head of each list.
+
+        # Iterate through the elements of the first list
         for a_index, a_node in enumerate(a_order):
+            # If this element is also in the second list...
             if a_node in b_node_vs_index:
                 b_index = b_node_vs_index[a_node]
 
+                # ...add all elements between the pointers and the current element...
                 merged.extend(a_order[a_pointer:a_index])
                 merged.extend(b_order[b_pointer:b_index])
+                # ...and add the common element.
                 merged.extend([a_node])
 
+                # Pointers ensure that we don't add the same element twice.
                 a_pointer = a_index + 1
                 b_pointer = b_index + 1
 
+        # Add the remaining elements of the lists.
         merged.extend(a_order[a_pointer:])
         merged.extend(b_order[b_pointer:])
 
@@ -122,34 +145,51 @@ class Tensor:
         """
         Adjust the gradient shape to match the tensor's shape, reversing any broadcasting that occurred during forward pass.
 
+        During the forward pass, the single element in the broadcasted axis was repeated to match the shape of the other
+        operand. This method reverses that operation. In the backward pass, the gradient therefore needs to be summed over
+        the broadcasted axis.
+
         Args:
             gradient_to_add (np.array): The gradient to be reshaped.
 
         Returns:
             np.array: The reshaped gradient.
         """
+
+        # Create a list of axis indices based on the shape of gradient_to_add.
         axes = list(range(len(gradient_to_add.shape)))
 
+        # Identify axes which do and do not match between gradient_to_add and self.grad.
+        # These are the 'matched_axes' and 'unmatched_axes', respectively.
         unmatched_axes = axes[: len(gradient_to_add.shape) - len(self.grad.shape)]
         matched_axes = axes[len(gradient_to_add.shape) - len(self.grad.shape) :]
 
         expanded_axes = []
+
+        # Iterate through matched axes to find out which were expanded during broadcasting.
         for axis in matched_axes:
             if (
                 self.grad.shape[axis - len(unmatched_axes)]
                 == gradient_to_add.shape[axis]
-            ):
+            ):  # If dimensions match, no broadcasting occured.
                 continue
-            elif self.grad.shape[axis - len(unmatched_axes)] == 1:
+            elif (
+                self.grad.shape[axis - len(unmatched_axes)] == 1
+            ):  # Broadcasting occured.
                 expanded_axes.append(axis)
             else:
+                # The shapes are incompatible.
                 raise Exception("Arrays could not have been broadcasted")
 
+        # Reverse the lists so that we can iterate through them in reverse order.
+        # This way, the indexes of the axes remain the same.
         unmatched_axes.reverse(), expanded_axes.reverse()
 
+        # All expanded axes must be summed over, but kept as an axis.
         for axis in expanded_axes:
             gradient_to_add = np.expand_dims(gradient_to_add.sum(axis), axis)
 
+        # All unmatched axes (the leading axes in the larger array) must be summed over.
         for axis in unmatched_axes:
             gradient_to_add = gradient_to_add.sum(axis)
 
@@ -165,13 +205,13 @@ class Tensor:
         """
         Backpropagate the gradient to the first operand.
         """
-        self.a.grad = np.array(-1)
+        pass
 
     def backpropagate_b(self) -> None:
         """
         Backpropagate the gradient to the second operand.
         """
-        self.b.grad = np.array(-1)
+        pass
 
     def cast_to_tensor(
         self, x: Union[int, float, bool, np.ndarray, "Tensor"]

@@ -13,7 +13,10 @@ class Linear(Module):
     """
 
     def __init__(self, dim_in: int, dim_out: int, bias: Optional[bool] = True) -> None:
+        # Randomly initialize the weights matrix
         self.weights = Tensor(np.random.randn(dim_out, dim_in))
+
+        # Randomly initialize the bias vector if bias=True, with the dimensionality of the output
         if bias:
             self.bias = Tensor(np.random.randn(dim_out, 1))
         else:
@@ -26,6 +29,8 @@ class Linear(Module):
         Arguments:
             x (Tensor): input to the layer.
         """
+
+        # Perform linear transformation, implemented using matrix multiplication
         out = self.weights @ x
         if self.bias:
             out += self.bias

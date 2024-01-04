@@ -39,13 +39,19 @@ class Module(ABC):
         are named by joining the name of the module and the parameter with a double underscore,
         e.g. 'module_name__parameter_name'.
         """
+
+        # loop through all attributes of the module object
         parameters = {}
         for attribute, value in self.__dict__.items():
+            # if the attribute is a tensor, add it to the dictionary of parameters
             if isinstance(value, Tensor):
                 parameters[attribute] = value
+
+            # if the attribute is a module, add its parameters to the dictionary of parameters
             elif isinstance(value, Module):
                 sub_params = value.parameters()
                 for sub_param in sub_params:
+                    # join the name of the module and the parameter with a double underscore
                     parameters[attribute + "__" + sub_param] = sub_params[sub_param]
 
         return parameters
